@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVM Link</title>
+  <style>
+    :root{--bg:#f4f7f6;--card:#fff;--text:#18332d;--muted:#71827d;--green:#25a66a;--line:#e5ece9;--danger:#d85e5e}
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}.nav{background:#17342d;color:#fff;padding:28px 18px}.brand{font-size:21px;font-weight:750;margin-bottom:34px}.brand span{color:#61c99a}
+    .nav button{display:block;width:100%;border:0;background:transparent;color:#afc2bb;text-align:left;padding:12px 14px;border-radius:8px;margin:4px 0;cursor:pointer}.nav button.active{background:#27483f;color:#fff}
+    main{padding:34px 42px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.top h1{margin:0;font-size:28px}.online{font-size:13px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9aa8a4;margin-right:7px}.dot.on{background:var(--green)}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 18px;color:var(--muted)}
+    .role{display:flex;gap:10px}.role button{flex:1;border:1px solid var(--line);background:#fff;padding:16px;border-radius:10px;color:var(--text);cursor:pointer}.role button.active{border-color:var(--green);background:#effaf5}
+    label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:16px 0 7px}.field{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;color:var(--text);background:#fbfdfc}.actions{display:flex;gap:10px;margin-top:18px}.primary,.secondary,.danger{border:0;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}.primary{background:var(--green);color:#fff}.secondary{background:#edf3f1;color:var(--text)}.danger{background:#fff0f0;color:var(--danger)}
+    .status-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:12px 0;font-size:14px}.status-row:last-child{border:0}.value{font-weight:700}.remote-toggle{width:100%;margin-top:18px}.error{display:none;margin-top:14px;background:#fff3f3;border:1px solid #f2cccc;color:#9b4545;border-radius:8px;padding:10px;font-size:13px}
+    .page{display:none}.page.active{display:block}.fingerprint{font-family:monospace;font-size:11px;word-break:break-all;color:#536860}
+    button{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}button:not(:disabled):hover{filter:brightness(.96)}button:not(:disabled):active{transform:translateY(1px)}button:focus-visible{outline:3px solid #62c99a;outline-offset:2px}button:disabled{cursor:wait;opacity:.72}.busy::after{content:"";display:inline-block;width:12px;height:12px;margin-left:9px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){button{transition:none}.busy::after{animation-duration:1.4s}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav"><div class="brand">KVM <span>Link</span></div><button class="active" data-page="home">總覽</button><button data-page="host">Host</button><button data-page="client">Client</button><button data-page="settings">設定</button><button data-page="permissions">權限</button></aside>
+    <main>
+      <div class="top"><h1 id="title">總覽</h1><div class="online"><span class="dot" id="onlineDot"></span><span id="onlineText">未連線</span></div></div>
+      <div class="error" id="errorBox" role="alert" aria-live="assertive"></div>
+      <section class="page active" id="home">
+        <div class="grid"><div class="card"><h2>裝置角色</h2><div class="role"><button id="hostRole" data-role="host">Host</button><button id="clientRole" data-role="client">Client</button></div><div class="status-row"><span>本機 IP</span><strong id="localIp">偵測中</strong></div><div class="status-row"><span>擷取狀態</span><strong id="captureStatus">未啟動</strong></div><div class="status-row"><span>控制模式</span><strong id="controlStatus">LOCAL</strong></div></div>
+        <div class="card"><h2>快速操作</h2><button class="primary remote-toggle" id="switchControl">切換到 REMOTE</button><button class="secondary remote-toggle" id="disconnect">斷線並釋放按鍵</button></div></div>
+      </section>
+      <section class="page" id="host"><div class="grid"><div class="card"><h2>Host 設定</h2><label>監聽連接埠</label><input class="field" id="hostPort" type="number" value="4242"><label>本機指紋</label><div class="fingerprint" id="fingerprint">啟動後產生</div><label>授權 Client 指紋</label><input class="field" id="clientFingerprint" placeholder="64 位十六進位指紋"><div class="actions"><button class="primary" id="startHost">啟動 Host</button><button class="secondary" id="authorizePeer">授權</button></div></div><div class="card"><h2>連線狀態</h2><div class="status-row"><span>監聽</span><strong id="listenStatus">未啟動</strong></div><div class="status-row"><span>Client 數量</span><strong id="peerCount">0</strong></div></div></div></section>
+      <section class="page" id="client"><div class="grid"><div class="card"><h2>Client 設定</h2><label>Host IP</label><input class="field" id="hostIp" placeholder="192.168.1.100"><label>連接埠</label><input class="field" id="clientPort" type="number" value="4242"><label>Host 指紋（建議填入）</label><input class="field" id="hostFingerprint" placeholder="64 位十六進位指紋"><div class="actions"><button class="primary" id="connect">連線</button><button class="secondary" id="clientDisconnect">斷線</button></div></div><div class="card"><h2>連線狀態</h2><div class="status-row"><span>連線</span><strong id="connectionStatus">未連線</strong></div><div class="status-row"><span>注入裝置</span><strong id="emulationStatus">未就緒</strong></div></div></div></section>
+      <section class="page" id="settings"><div class="card"><h2>設定</h2><label>切換快捷鍵</label><input class="field" value="Super × 3" readonly><label>切換逾時</label><input class="field" type="number" value="400" readonly></div></section>
+      <section class="page" id="permissions"><div class="card"><h2>輸入權限</h2><p>Linux：需要讀取 <code>/dev/input</code> 與寫入 <code>/dev/uinput</code> 權限。</p><p>macOS：需在「隱私權與安全性」啟用輔助使用及輸入監控。</p><button class="secondary" id="refreshStatus">重新檢查狀態</button></div></section>
+    </main>
+  </div>
+  <script>
+    const {invoke}=window.__TAURI__.core;
+    let remote=false;
+    const $=s=>document.querySelector(s);
+    function showError(e){const b=$('#errorBox');b.textContent=String(e);b.style.display='block'}
+    async function runAction(button,pendingLabel,action){if(button.disabled)return;const originalLabel=button.textContent;button.disabled=true;button.classList.add('busy');button.setAttribute('aria-busy','true');button.textContent=pendingLabel;$('#errorBox').style.display='none';try{await action()}catch(e){showError(e)}finally{button.disabled=false;button.classList.remove('busy');button.removeAttribute('aria-busy');button.textContent=button.id==='switchControl'?(remote?'切換到 LOCAL':'切換到 REMOTE'):originalLabel}}
+    async function refresh(){try{const s=await invoke('get_status');$('#onlineDot').classList.toggle('on',s.connected);$('#onlineText').textContent=s.connected?'已連線':'未連線';$('#captureStatus').textContent=s.capture_active?'已啟動':'未啟動';$('#controlStatus').textContent=s.forwarding?'REMOTE':'LOCAL';remote=s.forwarding;if(!$('#switchControl').disabled)$('#switchControl').textContent=remote?'切換到 LOCAL':'切換到 REMOTE';$('#listenStatus').textContent=s.listening_port?`UDP ${s.listening_port}`:'未啟動';$('#peerCount').textContent=s.peers;$('#connectionStatus').textContent=s.connected?'已連線':'未連線';$('#emulationStatus').textContent=s.emulation_ready?'已就緒':'未就緒';if(s.local_fingerprint)$('#fingerprint').textContent=s.local_fingerprint;if(s.last_error)showError(s.last_error)}catch(e){showError(e)}}
+    document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$('#'+b.dataset.page).classList.add('active');$('#title').textContent=b.textContent});
+    document.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-role]').forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+    $('#switchControl').onclick=()=>runAction($('#switchControl'),'切換中...',async()=>{await invoke('switch_control',{remote:!remote});await refresh()});
+    $('#disconnect').onclick=()=>runAction($('#disconnect'),'斷線中...',async()=>{await invoke('disconnect');await refresh()});$('#clientDisconnect').onclick=()=>runAction($('#clientDisconnect'),'斷線中...',async()=>{await invoke('disconnect');await refresh()});
+    $('#startHost').onclick=()=>runAction($('#startHost'),'啟動中...',async()=>{await invoke('start_host',{port:Number($('#hostPort').value)});await refresh()});
+    $('#authorizePeer').onclick=()=>runAction($('#authorizePeer'),'授權中...',async()=>{await invoke('authorize_peer',{fingerprint:$('#clientFingerprint').value.trim()});});
+    $('#connect').onclick=()=>runAction($('#connect'),'連線中...',async()=>{await invoke('connect_remote',{host:$('#hostIp').value.trim(),port:Number($('#clientPort').value),hostFingerprint:$('#hostFingerprint').value.trim()});await refresh()});
+    $('#refreshStatus').onclick=()=>runAction($('#refreshStatus'),'檢查中...',refresh);
+    invoke('local_ip').then(v=>$('#localIp').textContent=v).catch(()=>{});refresh();setInterval(refresh,1000);
+  </script>
+</body>
+</html>

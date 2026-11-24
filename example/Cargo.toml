@@ -1,0 +1,25 @@
+[package]
+name = "remote-input-core"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Single-file remote keyboard/mouse control core for macOS and Linux (extracted from Lan Mouse)"
+
+[dependencies]
+tokio = { version = "1.38", features = ["rt", "rt-multi-thread", "net", "sync", "time", "macros", "io-util"] }
+thiserror = "2"
+log = "0.4"
+bitflags = "2"
+sha2 = "0.10"
+rustls = { version = "0.23", default-features = false, features = ["std", "ring"] }
+webrtc-dtls = { version = "0.12", features = ["pem"] }
+webrtc-util = "0.11"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = { version = "0.25", features = ["highsierra"] }
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+keycode = "1.0"
